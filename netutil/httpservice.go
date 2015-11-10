@@ -29,10 +29,12 @@ type HttpService struct {
 	h   http.Handler
 	srv *http.Server
 
-	reqWG sync.WaitGroup
+	concur chanutil.Semaphore
+	reqWG  sync.WaitGroup
 }
 
-func NewHttpService(l *net.TCPListener, h http.Handler) *HttpService {
+// if maxConcurrent == 0, no limit on concurrency.
+func NewHttpService(l *net.TCPListener, h http.Handler, maxConcurrent int) *HttpService {
 	s := &HttpService{}
 
 	s.quitCtx, s.quitF = context.WithCancel(context.Background())
@@ -46,17 +48,56 @@ func NewHttpService(l *net.TCPListener, h http.Handler) *HttpService {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+	if maxConcurrent > 0 {
+		s.concur = chanutil.NewSemaphore(maxConcurrent)
+	}
 
 	return s
 }
 
-func (s *HttpService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+const hesitateTime = 50 * time.Millisecond
+
+var (
+	acquire_OK      int = 0
+	acquire_Quit    int = 1
+	acquire_Timeout int = 2
+)
+
+func (s *HttpService) acquireConn() int {
+	if s.concur == nil {
+		return acquire_OK
+	}
+
 	select {
 	case <-s.quitCtx.Done():
-		http.Error(w, s.quitCtx.Err().Error(), http.StatusServiceUnavailable)
-		return
-	default:
+		return acquire_Quit
+	// Acquire
+	case s.concur <- struct{}{}:
+		return acquire_OK
+	case <-time.After(hesitateTime):
+		return acquire_Timeout
 	}
+}
+
+func (s *HttpService) releaseConn() {
+	if s.concur == nil {
+		return
+	}
+
+	<-s.concur
+}
+
+func (s *HttpService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ret := s.acquireConn()
+	switch ret {
+	case acquire_Quit:
+		http.Error(w, "Service Unavailable!", http.StatusServiceUnavailable)
+		return
+	case acquire_Timeout:
+		http.Error(w, "Service Busy!", http.StatusRequestTimeout)
+		return
+	}
+	defer s.releaseConn()
 
 	s.reqWG.Add(1)
 	defer s.reqWG.Done()

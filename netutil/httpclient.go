@@ -21,6 +21,7 @@ type HttpClient struct {
 	hc     *Client
 }
 
+// if maxConcurrent == 0, no limit on concurrency.
 func NewHttpClient(maxConcurrent, timeout int) *HttpClient {
 	mi := maxConcurrent / 5
 	if mi <= 0 {
@@ -39,14 +40,21 @@ func NewHttpClient(maxConcurrent, timeout int) *HttpClient {
 		Transport: ts,
 		Timeout:   time.Duration(timeout) * time.Second,
 	}
-	return &HttpClient{
-		concur: chanutil.NewSemaphore(maxConcurrent),
-		ts:     ts,
-		hc:     hc,
+
+	c := &HttpClient{}
+	c.ts = ts
+	c.hc = hc
+	if maxConcurrent > 0 {
+		c.concur = chanutil.NewSemaphore(maxConcurrent)
 	}
+	return c
 }
 
 func (c *HttpClient) acquireConn(ctx context.Context) error {
+	if c.concur == nil {
+		return nil
+	}
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -57,6 +65,10 @@ func (c *HttpClient) acquireConn(ctx context.Context) error {
 }
 
 func (c *HttpClient) releaseConn() {
+	if c.concur == nil {
+		return
+	}
+
 	<-c.concur
 }
 
