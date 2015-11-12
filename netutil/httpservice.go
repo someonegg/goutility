@@ -57,7 +57,7 @@ func NewHttpService(l *net.TCPListener, h http.Handler, maxConcurrent int) *Http
 
 const hesitateTime = 50 * time.Millisecond
 
-var (
+const (
 	acquire_OK      int = 0
 	acquire_Quit    int = 1
 	acquire_Timeout int = 2
