@@ -84,8 +84,8 @@ func (tx *SQLTx) Rollback() error {
 
 // SQLDB is a contexted sql DB.
 type SQLDB struct {
-	concur chanutil.Semaphore
 	db     *DB
+	concur chanutil.Semaphore
 }
 
 func NewSQLDB(db *DB, maxConcurrent int) *SQLDB {
@@ -93,14 +93,22 @@ func NewSQLDB(db *DB, maxConcurrent int) *SQLDB {
 	if mi <= 0 {
 		mi = 2
 	}
+
 	db.SetMaxIdleConns(mi)
-	return &SQLDB{
-		concur: chanutil.NewSemaphore(maxConcurrent),
-		db:     db,
+
+	d := &SQLDB{}
+	d.db = db
+	if maxConcurrent > 0 {
+		d.concur = chanutil.NewSemaphore(maxConcurrent)
 	}
+	return d
 }
 
 func (d *SQLDB) acquireConn(ctx context.Context) error {
+	if d.concur == nil {
+		return nil
+	}
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -111,6 +119,10 @@ func (d *SQLDB) acquireConn(ctx context.Context) error {
 }
 
 func (d *SQLDB) releaseConn() {
+	if d.concur == nil {
+		return
+	}
+
 	<-d.concur
 }
 

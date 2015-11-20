@@ -28,7 +28,7 @@ func NewRedisPool(
 		mi = 2
 	}
 
-	p := &Pool{
+	rp := &Pool{
 		Dial:         newFn,
 		TestOnBorrow: testFn,
 		MaxIdle:      mi,
@@ -37,13 +37,19 @@ func NewRedisPool(
 		IdleTimeout:  idleTimeout,
 	}
 
-	return &RedisPool{
-		p:      p,
-		concur: chanutil.NewSemaphore(maxConcurrent),
+	p := &RedisPool{}
+	p.p = rp
+	if maxConcurrent > 0 {
+		p.concur = chanutil.NewSemaphore(maxConcurrent)
 	}
+	return p
 }
 
 func (p *RedisPool) acquireConn(ctx context.Context) error {
+	if p.concur == nil {
+		return nil
+	}
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -54,6 +60,10 @@ func (p *RedisPool) acquireConn(ctx context.Context) error {
 }
 
 func (p *RedisPool) releaseConn() {
+	if p.concur == nil {
+		return
+	}
+
 	<-p.concur
 }
 

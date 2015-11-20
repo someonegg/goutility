@@ -16,9 +16,9 @@ import (
 
 // HttpClient is a contexted http client.
 type HttpClient struct {
-	concur chanutil.Semaphore
 	ts     *Transport
 	hc     *Client
+	concur chanutil.Semaphore
 }
 
 // if maxConcurrent == 0, no limit on concurrency.
