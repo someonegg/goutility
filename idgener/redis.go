@@ -18,7 +18,7 @@ type redisGener struct {
 
 // If password isnot empty, then do AUTH.
 func NewRedisGener(server, password, idkey string,
-	maxConcurrent int) (IdGener, error) {
+	maxConcurrent int) (IDGener, error) {
 
 	dial := func() (redis.Conn, error) {
 		c, err := redis.Dial("tcp", server)
@@ -52,7 +52,7 @@ func (g *redisGener) Close() error {
 	return g.p.Close()
 }
 
-func (g *redisGener) GenId(ctx context.Context) (int64, error) {
+func (g *redisGener) GenID(ctx context.Context) (int64, error) {
 	c, err := g.p.Get(ctx)
 	if err != nil {
 		return 0, err

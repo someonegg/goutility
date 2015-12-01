@@ -10,8 +10,8 @@ import (
 	"io"
 )
 
-type IdGener interface {
+type IDGener interface {
 	io.Closer
 	// The first is 1.
-	GenId(ctx context.Context) (id int64, err error)
+	GenID(ctx context.Context) (id int64, err error)
 }

@@ -14,7 +14,7 @@ type memoryGener struct {
 }
 
 // This gener never fails.
-func NewMemoryGener() IdGener {
+func NewMemoryGener() IDGener {
 	return &memoryGener{}
 }
 
@@ -22,7 +22,7 @@ func (g *memoryGener) Close() error {
 	return nil
 }
 
-func (g *memoryGener) GenId(ctx context.Context) (int64, error) {
+func (g *memoryGener) GenID(ctx context.Context) (int64, error) {
 	id := atomic.AddInt64(&g.next, 1)
 	return id, nil
 }

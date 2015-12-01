@@ -16,7 +16,7 @@ type sqlGener struct {
 }
 
 func NewSqlGener(driver, dsn, tn string,
-	maxConcurrent int) (IdGener, error) {
+	maxConcurrent int) (IDGener, error) {
 
 	_db, err := sql.Open(driver, dsn)
 	if err != nil {
@@ -43,7 +43,7 @@ func (g *sqlGener) Close() error {
 	return g.db.Close()
 }
 
-func (g *sqlGener) GenId(ctx context.Context) (int64, error) {
+func (g *sqlGener) GenID(ctx context.Context) (int64, error) {
 	res, err := g.db.Exec(ctx, "INSERT INTO ? () VALUES ()", g.tn)
 	if err != nil {
 		return 0, err

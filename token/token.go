@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package idgener can generate token.
+// Package token can generate token.
 package token
 
 import (

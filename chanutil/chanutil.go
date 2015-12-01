@@ -16,48 +16,48 @@ var (
 )
 
 // Chan id.
-type ChanId int64
+type ChanID int64
 
 // Chanmap can create and index chans. Every chan created by
 // chanmap has a unique id, so you can get them by the id.
 //
 // Multiple goroutines can invoke methods on a Chanmap simultaneously.
 type Chanmap struct {
-	chans       map[ChanId]chan interface{}
+	chans       map[ChanID]chan interface{}
 	chanLock    sync.RWMutex
-	nextId      ChanId
+	nextID      ChanID
 	defChanSize int
 }
 
 func NewChanmap(defChanSize int) *Chanmap {
 	return &Chanmap{
-		chans:       make(map[ChanId]chan interface{}),
-		nextId:      1,
+		chans:       make(map[ChanID]chan interface{}),
+		nextID:      1,
 		defChanSize: defChanSize,
 	}
 }
 
-func (m *Chanmap) New() (id ChanId, c chan interface{}) {
+func (m *Chanmap) New() (id ChanID, c chan interface{}) {
 	return m.NewF(m.defChanSize)
 }
 
-func (m *Chanmap) NewF(size int) (id ChanId, c chan interface{}) {
+func (m *Chanmap) NewF(size int) (id ChanID, c chan interface{}) {
 	m.chanLock.Lock()
 	defer m.chanLock.Unlock()
-	id = m.nextId
+	id = m.nextID
 	c = make(chan interface{}, size)
 	m.chans[id] = c
-	m.nextId += 1
+	m.nextID += 1
 	return
 }
 
-func (m *Chanmap) Get(id ChanId) chan interface{} {
+func (m *Chanmap) Get(id ChanID) chan interface{} {
 	m.chanLock.RLock()
 	defer m.chanLock.RUnlock()
 	return m.chans[id]
 }
 
-func (m *Chanmap) Remove(id ChanId) {
+func (m *Chanmap) Remove(id ChanID) {
 	m.chanLock.Lock()
 	defer m.chanLock.Unlock()
 	delete(m.chans, id)
@@ -66,22 +66,22 @@ func (m *Chanmap) Remove(id ChanId) {
 var defChanmap = NewChanmap(1)
 
 // Call on the default Chanmap
-func New() (id ChanId, c chan interface{}) {
+func New() (id ChanID, c chan interface{}) {
 	return defChanmap.New()
 }
 
 // Call on the default Chanmap
-func NewF(size int) (id ChanId, c chan interface{}) {
+func NewF(size int) (id ChanID, c chan interface{}) {
 	return defChanmap.NewF(size)
 }
 
 // Call on the default Chanmap
-func Get(id ChanId) chan interface{} {
+func Get(id ChanID) chan interface{} {
 	return defChanmap.Get(id)
 }
 
 // Call on the default Chanmap
-func Remove(id ChanId) {
+func Remove(id ChanID) {
 	defChanmap.Remove(id)
 }
 
