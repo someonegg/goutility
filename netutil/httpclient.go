@@ -22,7 +22,7 @@ type HttpClient struct {
 }
 
 // if maxConcurrent == 0, no limit on concurrency.
-func NewHttpClient(maxConcurrent, timeout int) *HttpClient {
+func NewHttpClient(maxConcurrent int, timeout time.Duration) *HttpClient {
 	mi := maxConcurrent / 5
 	if mi <= 0 {
 		mi = DefaultMaxIdleConnsPerHost
@@ -38,7 +38,7 @@ func NewHttpClient(maxConcurrent, timeout int) *HttpClient {
 	}
 	hc := &Client{
 		Transport: ts,
-		Timeout:   time.Duration(timeout) * time.Second,
+		Timeout:   timeout,
 	}
 
 	c := &HttpClient{}
