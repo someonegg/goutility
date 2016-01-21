@@ -117,31 +117,31 @@ func (s *HttpService) QuitCtx() context.Context {
 	return s.quitCtx
 }
 
-// The HttpHandler type is an adapter to allow the use of
-// ordinary http.Handler as ContextHandler.
-type HttpHandler struct {
+type httpHandler struct {
 	oh http.Handler
 }
 
+// The http handler type is an adapter to allow the use of
+// ordinary http.Handler as ContextHandler.
 func NewHttpHandler(oh http.Handler) ContextHandler {
-	return HttpHandler{oh}
+	return httpHandler{oh}
 }
 
-func (h HttpHandler) ContextServeHTTP(ctx context.Context,
+func (h httpHandler) ContextServeHTTP(ctx context.Context,
 	w http.ResponseWriter, r *http.Request) {
 
 	h.oh.ServeHTTP(w, r)
 }
 
-// The MaxConcurrentHandler type is a middleware that can limit the
-// maximum number of concurrent access.
-type MaxConcurrentHandler struct {
+type maxConcurrentHandler struct {
 	oh           ContextHandler
 	concur       chanutil.Semaphore
 	hesitateTime time.Duration
 	notifier     MaxConcurrentNotifier
 }
 
+// The maxconcurrent handler type is a middleware that can limit the
+// maximum number of concurrent access.
 // if maxConcurrent == 0, no limit on concurrency.
 func NewMaxConcurrentHandler(oh ContextHandler,
 	maxConcurrent int, hesitateTime time.Duration,
@@ -151,7 +151,7 @@ func NewMaxConcurrentHandler(oh ContextHandler,
 		return oh
 	}
 
-	return &MaxConcurrentHandler{
+	return &maxConcurrentHandler{
 		oh:           oh,
 		concur:       chanutil.NewSemaphore(maxConcurrent),
 		hesitateTime: hesitateTime,
@@ -165,7 +165,7 @@ const (
 	acquire_Timeout int = 2
 )
 
-func (h *MaxConcurrentHandler) acquireConn(ctx context.Context) int {
+func (h *maxConcurrentHandler) acquireConn(ctx context.Context) int {
 	select {
 	case <-ctx.Done():
 		return acquire_CtxDone
@@ -177,11 +177,11 @@ func (h *MaxConcurrentHandler) acquireConn(ctx context.Context) int {
 	}
 }
 
-func (h *MaxConcurrentHandler) releaseConn() {
+func (h *maxConcurrentHandler) releaseConn() {
 	<-h.concur
 }
 
-func (h *MaxConcurrentHandler) ContextServeHTTP(ctx context.Context,
+func (h *maxConcurrentHandler) ContextServeHTTP(ctx context.Context,
 	w http.ResponseWriter, r *http.Request) {
 
 	ret := h.acquireConn(ctx)
