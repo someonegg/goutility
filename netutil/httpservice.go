@@ -143,12 +143,16 @@ type maxConcurrentHandler struct {
 // The maxconcurrent handler type is a middleware that can limit the
 // maximum number of concurrent access.
 // if maxConcurrent == 0, no limit on concurrency.
+// if hesitateTime == 0, use DefaultHesitateTime.
 func NewMaxConcurrentHandler(oh ContextHandler,
 	maxConcurrent int, hesitateTime time.Duration,
 	notifier MaxConcurrentNotifier) ContextHandler {
 
 	if maxConcurrent <= 0 {
 		return oh
+	}
+	if hesitateTime <= 0 {
+		hesitateTime = DefaultHesitateTime
 	}
 
 	return &maxConcurrentHandler{
@@ -198,6 +202,8 @@ func (h *maxConcurrentHandler) ContextServeHTTP(ctx context.Context,
 	h.oh.ContextServeHTTP(ctx, w, r)
 }
 
+const DefaultHesitateTime = 50 * time.Millisecond
+
 type MaxConcurrentNotifier interface {
 	OnContextDone(w http.ResponseWriter, r *http.Request)
 	OnConcurrentLimit(w http.ResponseWriter, r *http.Request)
@@ -218,5 +224,3 @@ func (n defaultMaxConcurrentNotifier) OnConcurrentLimit(
 }
 
 var DefaultMaxConcurrentNotifier MaxConcurrentNotifier = defaultMaxConcurrentNotifier{}
-
-const DefaultHesitateTime = 50 * time.Millisecond
