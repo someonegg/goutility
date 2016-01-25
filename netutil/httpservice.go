@@ -88,6 +88,7 @@ func (s *HttpService) ending() {
 		}
 	}
 
+	s.quitF()
 	s.stopD.SetDone()
 }
 
