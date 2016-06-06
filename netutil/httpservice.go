@@ -221,7 +221,7 @@ func (n defaultMaxConcurrentNotifier) OnContextDone(
 func (n defaultMaxConcurrentNotifier) OnConcurrentLimit(
 	w http.ResponseWriter, r *http.Request) {
 
-	http.Error(w, "Service Busy", http.StatusRequestTimeout)
+	http.Error(w, "Service Busy", http.StatusTooManyRequests)
 }
 
 var DefaultMaxConcurrentNotifier MaxConcurrentNotifier = defaultMaxConcurrentNotifier{}
