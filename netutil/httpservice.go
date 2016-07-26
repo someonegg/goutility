@@ -215,13 +215,13 @@ type defaultMaxConcurrentNotifier struct{}
 func (n defaultMaxConcurrentNotifier) OnContextDone(
 	w http.ResponseWriter, r *http.Request) {
 
-	http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+	http.Error(w, "Service Maintenance", http.StatusServiceUnavailable)
 }
 
 func (n defaultMaxConcurrentNotifier) OnConcurrentLimit(
 	w http.ResponseWriter, r *http.Request) {
 
-	http.Error(w, "Service Busy", http.StatusTooManyRequests)
+	http.Error(w, "Service Busy", http.StatusServiceUnavailable)
 }
 
 var DefaultMaxConcurrentNotifier MaxConcurrentNotifier = defaultMaxConcurrentNotifier{}
