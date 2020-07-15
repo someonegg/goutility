@@ -45,6 +45,10 @@ func NewHttpService(l *net.TCPListener, h http.Handler,
 }
 
 func NewHttpServiceEx(l *net.TCPListener, h ContextHandler) *HttpService {
+	return NewHttpserviceWithTimeout(l, h, 10 * time.Second, 10 * time.Second)
+}
+
+func NewHttpserviceWithTimeout(l *net.TCPListener, h ContextHandler, rto time.Duration, wto time.Duration) *HttpService {
 	s := &HttpService{}
 
 	s.quitCtx, s.quitF = context.WithCancel(context.Background())
@@ -54,8 +58,8 @@ func NewHttpServiceEx(l *net.TCPListener, h ContextHandler) *HttpService {
 	s.srv = &http.Server{
 		Addr:           s.l.Addr().String(),
 		Handler:        s,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    rto,
+		WriteTimeout:   wto,
 		MaxHeaderBytes: 1 << 20,
 	}
 
